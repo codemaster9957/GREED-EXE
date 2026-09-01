@@ -2,9 +2,8 @@ services:
   - type: web
     name: greed-exe
     runtime: node
-    rootDir: server
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -14,6 +13,9 @@ services:
     #   fromDatabase:
     #     name: greed-exe-db
     #     property: connectionString
+
+# Keep the repository root available because the server imports ../shared.
+# Do not set rootDir: server unless shared/ is moved inside server/.
 
 # Uncomment when you add a PostgreSQL database:
 # databases:
