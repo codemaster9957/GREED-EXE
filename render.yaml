@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: greed-exe
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+    # Uncomment and set when you add PostgreSQL persistence:
+    # - key: DATABASE_URL
+    #   fromDatabase:
+    #     name: greed-exe-db
+    #     property: connectionString
+
+# Uncomment when you add a PostgreSQL database:
+# databases:
+#   - name: greed-exe-db
+#     plan: free
