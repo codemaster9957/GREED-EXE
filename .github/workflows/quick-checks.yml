@@ -1,0 +1,20 @@
+name: Quick checks
+
+on:
+  push:
+    branches:
+      - fix/quick-main-issues
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  server-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run server regression tests
+        run: node --test server/tests/*.test.js
