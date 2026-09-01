@@ -38,6 +38,7 @@ function makeFixture() {
     heldBits: 0,
     isMostWanted: true,
     shieldUntil: 0,
+    hasUpgrade: () => false,
     getKnockbackReceived: () => 1,
     die() {
       this.state = PLAYER_STATES.DEAD;
