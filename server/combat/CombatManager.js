@@ -87,10 +87,6 @@ export class CombatManager {
       }
     }
 
-    // Kill if launched into a pit?  (Handled by pit detection in PlayerManager)
-    // Mark attacker
-    attacker.kills; // no increment here — only increment on confirmed kill
-
     // Broadcast hit
     this.room.broadcast(MSG.PLAYER_HIT, {
       attackerId:  attacker.id,
@@ -99,24 +95,6 @@ export class CombatManager {
       stolen:      stolenAmount,
       targetHeld:  target.heldBits,
     });
-
-    // Most Wanted kill bonus
-    if (target.isMostWanted) {
-      attacker.addHeldBits(GAME_CONFIG.MOST_WANTED_KILL_BONUS);
-      attacker.mostWantedKills++;
-      this.room.broadcast(MSG.MOST_WANTED_CLEAR, {});
-      // Re-evaluate after a tick
-    }
-
-    // King kill bonus
-    if (this.room.kingId === target.id) {
-      attacker.addHeldBits(GAME_CONFIG.KING_KILL_BONUS);
-    }
-
-    // Rival bonus
-    if (attacker.rivalId === target.id) {
-      attacker.addHeldBits(GAME_CONFIG.CHIPS_RIVAL_KILL); // small bit bonus
-    }
   }
 
   // ── Kill ─────────────────────────────────────────────────
@@ -125,16 +103,39 @@ export class CombatManager {
     const p    = room.playerManager.getPlayer(playerId);
     if (!p || p.state !== PLAYER_STATES.ALIVE) return;
 
-    const now     = Date.now();
-    const dropped = p.die(now);
+    const wasMostWanted = p.isMostWanted;
+    const wasKing       = room.kingId === playerId;
+    const now            = Date.now();
+    const dropped        = p.die(now);
 
-    // Credit killer
+    // Credit killer and apply bonuses only on a confirmed death.
     if (killerId && killerId !== playerId) {
       const killer = room.playerManager.getPlayer(killerId);
       if (killer) {
+        const wasRival = killer.rivalId === playerId;
+
         killer.kills++;
+
+        if (wasMostWanted) {
+          killer.addHeldBits(GAME_CONFIG.MOST_WANTED_KILL_BONUS);
+          killer.mostWantedKills++;
+        }
+
+        if (wasKing) {
+          killer.addHeldBits(GAME_CONFIG.KING_KILL_BONUS);
+        }
+
+        if (wasRival) {
+          killer.addHeldBits(GAME_CONFIG.CHIPS_RIVAL_KILL);
+        }
+
         this._trackRivalry(killerId, playerId);
       }
+    }
+
+    // A dead Most Wanted player must be cleared/reassigned immediately.
+    if (wasMostWanted) {
+      room.playerManager.updateMostWanted();
     }
 
     // Scatter dropped bits
